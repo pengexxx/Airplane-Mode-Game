@@ -349,6 +349,21 @@ export function createPixelTextures(scene: Phaser.Scene) {
   psCtx.fillRect(0, 0, 4, 4);
   textures.addCanvas('particle_spark', pSpark);
 
+  // Impact particles: small solid pixels, tinted per effect by the emitters in effects.ts
+  const makeDot = (key: string, w: number, h: number, color: string) => {
+    if (textures.exists(key)) return;
+    const c = document.createElement('canvas');
+    c.width = w;
+    c.height = h;
+    const cx = c.getContext('2d')!;
+    cx.fillStyle = color;
+    cx.fillRect(0, 0, w, h);
+    textures.addCanvas(key, c);
+  };
+  makeDot('fx_scrap', 3, 2, '#FFFFFF'); // torn page scrap
+  makeDot('fx_pixel', 2, 2, '#FFFFFF'); // glitch / fizzle / dust pixel
+  makeDot('fx_ring', 1, 1, '#FFFFFF');  // base for the impact flash
+
   // Reticle Crosshair (12x12)
   const reticleCanvas = document.createElement('canvas');
   reticleCanvas.width = 12;

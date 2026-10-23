@@ -61,6 +61,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   public static readonly SPRITE_SCALE = 0.23;
   private walkAnimTimer: number = 0;
+  private rollTimer: number = 0;
+  private rollCooldownTimer: number = 0;
   private bookPoseUntil: number = 0;
 
   constructor(

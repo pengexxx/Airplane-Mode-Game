@@ -70,8 +70,8 @@ export abstract class BaseEnemy extends Phaser.Physics.Arcade.Sprite {
     const knockSpeed = 120;
     this.setVelocity(Math.cos(knockbackAngle) * knockSpeed, Math.sin(knockbackAngle) * knockSpeed);
 
-    // Paper fluttering particle
-    for (let i = 0; i < 3; i++) {
+    // (impact scraps now come from ImpactEffects in GameScene)
+    for (let i = 0; i < 0; i++) {
       const p = this.scene.physics.add.sprite(
         this.x + (Math.random() * 10 - 5),
         this.y + (Math.random() * 10 - 5),

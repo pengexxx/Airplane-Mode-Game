@@ -4,6 +4,7 @@ import { Player } from './entities/Player.ts';
 import { RoomManager } from './RoomManager.ts';
 import { calculateKillScore, calculateRoomClearScore, ROOM_CONFIGS } from './rules.ts';
 import { soundEngine } from './audio.ts';
+import { ImpactEffects } from './effects.ts';
 
 export interface GameEventCallbacks {
   onScoreUpdate: (score: number, multiplier: number, isStreakIncrease?: boolean) => void;
@@ -24,6 +25,7 @@ export class GameScene extends Phaser.Scene {
   private enemyBullets!: Phaser.Physics.Arcade.Group;
   private walls!: Phaser.Physics.Arcade.StaticGroup;
   private reticle!: Phaser.GameObjects.Sprite;
+  private fx!: ImpactEffects;
 
   private score: number = 0;
   private multiplier: number = 1.0;
@@ -64,6 +66,9 @@ export class GameScene extends Phaser.Scene {
     // 2. Set world & camera bounds (480x270 virtual pixel canvas)
     this.physics.world.setBounds(0, 0, 480, 270);
     this.cameras.main.setBounds(0, 0, 480, 270);
+
+    // Impact particles (enemy hits vs wall hits look different)
+    this.fx = new ImpactEffects(this);
 
     // 3. Static walls group
     this.walls = this.physics.add.staticGroup();
@@ -123,11 +128,16 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.collider(this.player, this.walls);
 
     // Bullets vs Walls
+    // (pages use their rotation for direction: the wall collision has already zeroed velocity)
     this.physics.add.collider(this.playerBullets, this.walls, (bullet) => {
-      bullet.destroy();
+      const b = bullet as Phaser.Physics.Arcade.Sprite;
+      this.fx.pageHitsWall(b.x, b.y, b.rotation);
+      b.destroy();
     });
     this.physics.add.collider(this.enemyBullets, this.walls, (bullet) => {
-      bullet.destroy();
+      const b = bullet as Phaser.Physics.Arcade.Sprite;
+      this.fx.enemyShotFizzles(b.x, b.y);
+      b.destroy();
     });
 
     // Player Bullets vs Enemies -> damage
@@ -136,6 +146,7 @@ export class GameScene extends Phaser.Scene {
       const bullet = bulletObj as unknown as Phaser.Physics.Arcade.Sprite;
 
       if (bullet.active && enemy.active && !enemy.isDefeated) {
+        this.fx.pageHitsEnemy(bullet.x, bullet.y, bullet.rotation);
         bullet.disableBody(true, true);
         bullet.destroy();
         const knockAngle = Phaser.Math.Angle.Between(bullet.x, bullet.y, enemy.x, enemy.y);
@@ -162,6 +173,7 @@ export class GameScene extends Phaser.Scene {
       const bullet = bulletObj as unknown as Phaser.Physics.Arcade.Sprite;
 
       if (bullet.active && table.isFlipped && !table.isBroken) {
+        this.fx.enemyShotFizzles(bullet.x, bullet.y);
         bullet.disableBody(true, true);
         bullet.destroy();
         table.takeBulletHit();
@@ -174,6 +186,7 @@ export class GameScene extends Phaser.Scene {
       const bullet = bulletObj as unknown as Phaser.Physics.Arcade.Sprite;
 
       if (bullet.active && table.isFlipped && !table.isBroken) {
+        this.fx.pageHitsWall(bullet.x, bullet.y, bullet.rotation);
         bullet.disableBody(true, true);
         bullet.destroy();
       }
