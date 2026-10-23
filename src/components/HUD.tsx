@@ -18,6 +18,7 @@ interface HUDProps {
   canRoll: boolean;
   isHit: boolean;
   isGameOver: boolean;
+  isWin?: boolean;
   isStreakPopping: boolean;
   showStreakLost: boolean;
   isMuted: boolean;
@@ -38,6 +39,7 @@ export const HUD: React.FC<HUDProps> = ({
   reloadProgress,
   isRolling,
   canRoll,
+  isWin = false,
   isHit,
   isGameOver,
   isStreakPopping,
@@ -117,6 +119,7 @@ export const HUD: React.FC<HUDProps> = ({
             streakMultiplier={multiplier}
             isHit={isHit}
             isGameOver={isGameOver}
+            isWin={isWin}
             notificationBadge={notificationBadge}
           />
         </div>

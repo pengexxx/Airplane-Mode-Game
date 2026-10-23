@@ -49,6 +49,14 @@ export class GameScene extends Phaser.Scene {
     this.isGameActive = active;
   }
 
+  preload() {
+    // Hand-made sprites. Loaded under the same keys the procedural texture factory uses,
+    // so the factory skips them and only fills in what's still code-drawn (zombies, tables...).
+    for (const key of ['monk_idle', 'monk_walk', 'monk_roll', 'monk_book']) {
+      this.load.image(key, `sprites/${key}.png`);
+    }
+  }
+
   create() {
     // 1. Generate procedural pixel textures
     createPixelTextures(this);
@@ -136,9 +144,11 @@ export class GameScene extends Phaser.Scene {
     });
 
     // Enemy Bullets vs Player -> bullet is destroyed the moment it touches monk, removes exactly 1 motivation
-    this.physics.add.overlap(this.enemyBullets, this.player, (bulletObj) => {
-      const bullet = bulletObj as unknown as Phaser.Physics.Arcade.Sprite;
-      if (!bullet.active) return;
+    // NOTE: Phaser passes the single sprite (the player) FIRST when one side is a sprite and the
+    // other a group, so pick the bullet explicitly. Destroying the wrong one deleted the monk.
+    this.physics.add.overlap(this.player, this.enemyBullets, (objA, objB) => {
+      const bullet = (objA === this.player ? objB : objA) as unknown as Phaser.Physics.Arcade.Sprite;
+      if (!bullet.active || (bullet as unknown) === this.player) return;
       bullet.disableBody(true, true);
       bullet.destroy();
       if (this.isGameActive) {

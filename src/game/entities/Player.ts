@@ -59,6 +59,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   public onTableFlipped?: () => void;
   public onEmptyClipFired?: () => void;
 
+  public static readonly SPRITE_SCALE = 0.23;
+  private walkAnimTimer: number = 0;
+  private bookPoseUntil: number = 0;
+
   constructor(
     scene: Phaser.Scene,
     x: number,
@@ -74,10 +78,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.setCollideWorldBounds(true);
     this.setDepth(8);
 
-    // Hitbox tuning (tighter than 16x16 for fair bullet hell dodging)
+    // Hand-made sprite is 84x128; shrink it to ~30px tall in the 480x270 world.
+    this.setScale(Player.SPRITE_SCALE);
+
+    // Hitbox tuning: small torso box (in source-image pixels) for fair bullet-hell dodging
     if (this.body) {
-      this.body.setSize(10, 12);
-      this.body.setOffset(3, 2);
+      this.body.setSize(32, 52);
+      this.body.setOffset(26, 46);
     }
 
     // Input setup
@@ -205,10 +212,22 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     this.setVelocity(vx * this.moveSpeed, vy * this.moveSpeed);
 
-    // Facing Angle toward mouse
+    // Facing toward mouse (flip only; tilting a tall sprite looks off)
     const aimAngle = Phaser.Math.Angle.Between(this.x, this.y, pointerWorldX, pointerWorldY);
-    this.setRotation(aimAngle * 0.15); // subtle tilt toward cursor
+    this.setRotation(0);
     this.setFlipX(pointerWorldX < this.x);
+
+    // Pose: book while shooting, alternate idle/walk frames while moving
+    const isMoving = vx !== 0 || vy !== 0;
+    if (time < this.bookPoseUntil) {
+      this.setTexture('monk_book');
+    } else if (isMoving) {
+      this.walkAnimTimer += delta;
+      this.setTexture(Math.floor(this.walkAnimTimer / 160) % 2 === 0 ? 'monk_walk' : 'monk_idle');
+    } else {
+      this.walkAnimTimer = 0;
+      this.setTexture('monk_idle');
+    }
 
     // Shooting / Empty Clip Dry Click
     if (isPointerDown && time > this.lastFireTime + this.fireCooldown) {
@@ -300,6 +319,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   private firePage(aimAngle: number, time: number) {
     this.lastFireTime = time;
+    this.bookPoseUntil = time + 180;
     this.ammo -= 1;
     soundEngine.playShoot();
 
@@ -440,7 +460,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.reloadPromptText) {
       this.reloadPromptText.setVisible(false);
     }
-    this.setTexture('monk');
+    this.setTexture('monk_idle');
     this.setVelocity(0, 0);
   }
 
@@ -493,13 +513,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private createGhostTrail() {
     const ghost = this.scene.add.sprite(this.x, this.y, 'monk_roll');
     ghost.setRotation(this.rotation);
+    ghost.setScale(Player.SPRITE_SCALE);
     ghost.setAlpha(0.4);
     ghost.setTint(0xf97316);
     ghost.setDepth(7);
     this.scene.tweens.add({
       targets: ghost,
       alpha: 0,
-      scale: 0.8,
+      scale: Player.SPRITE_SCALE * 0.8,
       duration: 220,
       onComplete: () => ghost.destroy(),
     });

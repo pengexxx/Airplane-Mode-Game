@@ -134,7 +134,16 @@ export default function App() {
     }
   }, [bestScore, bestRoom, bestStreak]);
 
-  // Initialize Phaser Game instance
+  // Latest values for the game callbacks. Kept in refs so the Phaser game is created ONCE
+  // and never torn down when React state (score, multiplier, best stats) changes.
+  const showTutorialRef = useRef(showTutorial);
+  const updateBestStatsRef = useRef(updateBestStats);
+  const multiplierRef = useRef(multiplier);
+  showTutorialRef.current = showTutorial;
+  updateBestStatsRef.current = updateBestStats;
+  multiplierRef.current = multiplier;
+
+  // Initialize Phaser Game instance (once)
   useEffect(() => {
     if (!mountRef.current || gameRef.current) return;
 
@@ -171,7 +180,7 @@ export default function App() {
       sceneRef.current = scene;
 
       scene.init({
-        startRoomIndex: showTutorial ? 0 : 1,
+        startRoomIndex: showTutorialRef.current ? 0 : 1,
         callbacks: {
           onScoreUpdate: (s, m, isStreakIncrease) => {
             setScore(s);
@@ -205,11 +214,11 @@ export default function App() {
             setIsMonkPickingUpPhone(true);
           },
           onGameOver: (finalScore, roomReached, finalStreak) => {
-            updateBestStats(finalScore, roomReached, finalStreak);
+            updateBestStatsRef.current(finalScore, roomReached, finalStreak);
             setGameState('gameover');
           },
           onVictory: (finalScore) => {
-            updateBestStats(finalScore, 4, multiplier);
+            updateBestStatsRef.current(finalScore, 4, multiplierRef.current);
             setGameState('victory');
           },
           onMonkHitReaction: () => {
@@ -234,7 +243,8 @@ export default function App() {
       gameRef.current = null;
       sceneRef.current = null;
     };
-  }, [showTutorial, focusCanvas, updateBestStats, multiplier]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Start game from title
   const handleStartGame = () => {
@@ -362,6 +372,7 @@ export default function App() {
           canRoll={canRoll}
           isHit={isHitReaction}
           isGameOver={gameState === 'gameover' || isMonkPickingUpPhone}
+          isWin={gameState === 'victory'}
           isStreakPopping={isStreakPopping}
           showStreakLost={showStreakLost}
           isMuted={isMuted}
