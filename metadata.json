@@ -2,5 +2,5 @@
   "name": "Airplane Mode",
   "description": "A 2D top-down bullet-hell roguelike where a meditating monk fights digital distractions inside his mind.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": []
 }

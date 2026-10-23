@@ -423,7 +423,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     // Exactly 1 segment removed
     this.motivation = Math.max(0, this.motivation - 1);
-    console.log(`[MONK HIT] Motivation: ${this.motivation}/${this.maxMotivation}`);
 
     // Audio: thud + phone notification ding
     soundEngine.playHurt();

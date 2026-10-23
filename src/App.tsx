@@ -147,9 +147,6 @@ export default function App() {
   useEffect(() => {
     if (!mountRef.current || gameRef.current) return;
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const autostart = urlParams.get('autostart') === '1';
-
     const config: Phaser.Types.Core.GameConfig = {
       type: Phaser.AUTO,
       parent: mountRef.current,
@@ -229,13 +226,6 @@ export default function App() {
           },
         },
       });
-
-      if (autostart) {
-        setGameState('playing');
-        soundEngine.playChime();
-        scene.setGameActive(true);
-        focusCanvas();
-      }
     });
 
     return () => {
@@ -309,7 +299,7 @@ export default function App() {
     }
   }, [gameState, focusCanvas]);
 
-  // Window key listeners for Mute, Pause, and testing
+  // Window key listeners for Mute and Pause
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'm' || e.key === 'M') {
@@ -323,20 +313,10 @@ export default function App() {
       }
     };
 
-    const handleTestDefeat = () => {
-      setIsMonkPickingUpPhone(true);
-      setTimeout(() => setGameState('gameover'), 500);
-    };
-    const handleTestVictory = () => setGameState('victory');
-
     window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('test-defeat', handleTestDefeat);
-    window.addEventListener('test-victory', handleTestVictory);
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('test-defeat', handleTestDefeat);
-      window.removeEventListener('test-victory', handleTestVictory);
     };
   }, [gameState, handleToggleMute, handlePause, handleResume]);
 
